@@ -45,5 +45,51 @@ resource "aws_vpc_endpoint" "dynamodb" {
   tags         = { Name = "frameops-${var.env}-dynamodb" }
 }
 
+# Security group for ECS Fargate tasks
+resource "aws_security_group" "ecs_tasks" {
+  name        = "frameops-${var.env}-ecs-tasks"
+  description = "Allow ECS tasks egress"
+  vpc_id      = aws_vpc.frameops.id
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  tags = { Name = "frameops-${var.env}-ecs-tasks", Project = "FrameOps" }
+}
+
+# ECR and Logs endpoints for Fargate image pull without NAT
+resource "aws_vpc_endpoint" "ecr_api" {
+  vpc_id              = aws_vpc.frameops.id
+  service_name        = "com.amazonaws.${var.region}.ecr.api"
+  vpc_endpoint_type   = "Interface"
+  private_dns_enabled = true
+  subnet_ids          = [aws_subnet.private_a.id, aws_subnet.private_b.id]
+  security_group_ids  = [aws_security_group.ecs_tasks.id]
+  tags                = { Name = "frameops-${var.env}-ecr-api" }
+}
+
+resource "aws_vpc_endpoint" "ecr_dkr" {
+  vpc_id              = aws_vpc.frameops.id
+  service_name        = "com.amazonaws.${var.region}.ecr.dkr"
+  vpc_endpoint_type   = "Interface"
+  private_dns_enabled = true
+  subnet_ids          = [aws_subnet.private_a.id, aws_subnet.private_b.id]
+  security_group_ids  = [aws_security_group.ecs_tasks.id]
+  tags                = { Name = "frameops-${var.env}-ecr-dkr" }
+}
+
+resource "aws_vpc_endpoint" "logs" {
+  vpc_id              = aws_vpc.frameops.id
+  service_name        = "com.amazonaws.${var.region}.logs"
+  vpc_endpoint_type   = "Interface"
+  private_dns_enabled = true
+  subnet_ids          = [aws_subnet.private_a.id, aws_subnet.private_b.id]
+  security_group_ids  = [aws_security_group.ecs_tasks.id]
+  tags                = { Name = "frameops-${var.env}-logs" }
+}
+
 output "vpc_id" { value = aws_vpc.frameops.id }
 output "private_subnets" { value = [aws_subnet.private_a.id, aws_subnet.private_b.id] }
+output "ecs_security_group" { value = aws_security_group.ecs_tasks.id }

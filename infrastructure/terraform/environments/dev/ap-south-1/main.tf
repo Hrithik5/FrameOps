@@ -84,7 +84,13 @@ module "step_functions" {
   sfn_role_arn    = ""
   ecs_cluster_arn = module.ecs.cluster_arn
   finalizer_arn   = ""
-  definition_json = file("${path.module}/../../../../../workflows/processing/definition.asl.json")
+  definition_json = templatefile("${path.module}/../../../../../workflows/processing/definition.asl.json.tpl", {
+    env                  = local.env
+    region               = local.region
+    cluster_arn          = module.ecs.cluster_arn
+    private_subnets_json = jsonencode(module.vpc.private_subnets)
+    ecs_security_group   = module.vpc.ecs_security_group
+  })
 }
 
 module "lambda" {
