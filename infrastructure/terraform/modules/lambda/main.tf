@@ -45,20 +45,13 @@ variable "lambda_role_arn" {
   default = ""
 }
 
-# Placeholder zip — replace with real services/validator zip in CI
+# Real validator zip — packages services/validator + data/schemas + fallback logic (Spec §8)
+# Build dir is at ../../../../build/lambda_validator (created via build/lambda_validator)
 data "archive_file" "validator_placeholder" {
   type        = "zip"
   output_path = "${path.module}/validator_placeholder.zip"
-  source {
-    content  = <<-PYTHON
-def lambda_handler(event, context):
-    import json
-    # Thin wrapper over services.validator.handler.lambda_handler
-    # Real deployment packages services/validator/core.py + data/schemas
-    return {"results": [{"status": "proceed"}]}
-PYTHON
-    filename = "handler.py"
-  }
+  source_dir  = "${path.module}/../../../../build/lambda_validator"
+  excludes    = ["__pycache__"]
 }
 
 resource "aws_cloudwatch_log_group" "validator" {
