@@ -1,5 +1,5 @@
 {
-  "Comment": "FrameOps processing — asset-type branching, parallel jobs, ECS Fargate sync, retries/timeouts, finalize gate",
+  "Comment": "FrameOps processing \u2014 asset-type branching, parallel jobs, ECS Fargate sync, retries/timeouts, finalize gate",
   "StartAt": "ChoosePlan",
   "States": {
     "ChoosePlan": {
@@ -38,12 +38,14 @@
               "Type": "Task",
               "Resource": "arn:aws:states:::ecs:runTask.sync",
               "Parameters": {
-                "TaskDefinition": "frameops-metadata",
+                "TaskDefinition": "frameops-dev-metadata",
                 "LaunchType": "FARGATE"
               },
               "Retry": [
                 {
-                  "ErrorEquals": ["States.ALL"],
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
                   "MaxAttempts": 3,
                   "IntervalSeconds": 2,
                   "BackoffRate": 2.0
@@ -51,7 +53,9 @@
               ],
               "Catch": [
                 {
-                  "ErrorEquals": ["States.ALL"],
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
                   "ResultPath": "$.error",
                   "Next": "ImageBranchFailed"
                 }
@@ -72,12 +76,14 @@
               "Type": "Task",
               "Resource": "arn:aws:states:::ecs:runTask.sync",
               "Parameters": {
-                "TaskDefinition": "frameops-thumbnail",
+                "TaskDefinition": "frameops-dev-thumbnail",
                 "LaunchType": "FARGATE"
               },
               "Retry": [
                 {
-                  "ErrorEquals": ["States.ALL"],
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
                   "MaxAttempts": 3,
                   "IntervalSeconds": 2,
                   "BackoffRate": 2.0
@@ -85,7 +91,9 @@
               ],
               "Catch": [
                 {
-                  "ErrorEquals": ["States.ALL"],
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
                   "ResultPath": "$.error",
                   "Next": "ImageThumbFailed"
                 }
@@ -103,7 +111,9 @@
       "Next": "Finalize",
       "Retry": [
         {
-          "ErrorEquals": ["States.ALL"],
+          "ErrorEquals": [
+            "States.ALL"
+          ],
           "MaxAttempts": 3,
           "IntervalSeconds": 2,
           "BackoffRate": 2.0
@@ -111,7 +121,9 @@
       ],
       "Catch": [
         {
-          "ErrorEquals": ["States.ALL"],
+          "ErrorEquals": [
+            "States.ALL"
+          ],
           "Next": "TerminalFailure"
         }
       ]
@@ -126,7 +138,7 @@
               "Type": "Task",
               "Resource": "arn:aws:states:::ecs:runTask.sync",
               "Parameters": {
-                "TaskDefinition": "frameops-metadata",
+                "TaskDefinition": "frameops-dev-metadata",
                 "LaunchType": "FARGATE"
               },
               "TimeoutSeconds": 300,
@@ -141,7 +153,7 @@
               "Type": "Task",
               "Resource": "arn:aws:states:::ecs:runTask.sync",
               "Parameters": {
-                "TaskDefinition": "frameops-transcode",
+                "TaskDefinition": "frameops-dev-transcode",
                 "LaunchType": "FARGATE"
               },
               "TimeoutSeconds": 1800,
@@ -156,7 +168,7 @@
               "Type": "Task",
               "Resource": "arn:aws:states:::ecs:runTask.sync",
               "Parameters": {
-                "TaskDefinition": "frameops-thumbnail",
+                "TaskDefinition": "frameops-dev-thumbnail",
                 "LaunchType": "FARGATE"
               },
               "TimeoutSeconds": 300,
@@ -177,7 +189,7 @@
               "Type": "Task",
               "Resource": "arn:aws:states:::ecs:runTask.sync",
               "Parameters": {
-                "TaskDefinition": "frameops-metadata",
+                "TaskDefinition": "frameops-dev-metadata",
                 "LaunchType": "FARGATE"
               },
               "TimeoutSeconds": 300,
@@ -192,7 +204,7 @@
               "Type": "Task",
               "Resource": "arn:aws:states:::ecs:runTask.sync",
               "Parameters": {
-                "TaskDefinition": "frameops-audio",
+                "TaskDefinition": "frameops-dev-audio",
                 "LaunchType": "FARGATE"
               },
               "TimeoutSeconds": 600,
@@ -213,7 +225,7 @@
               "Type": "Task",
               "Resource": "arn:aws:states:::ecs:runTask.sync",
               "Parameters": {
-                "TaskDefinition": "frameops-document",
+                "TaskDefinition": "frameops-dev-document",
                 "LaunchType": "FARGATE"
               },
               "TimeoutSeconds": 300,
@@ -228,7 +240,7 @@
               "Type": "Task",
               "Resource": "arn:aws:states:::ecs:runTask.sync",
               "Parameters": {
-                "TaskDefinition": "frameops-metadata",
+                "TaskDefinition": "frameops-dev-metadata",
                 "LaunchType": "FARGATE"
               },
               "TimeoutSeconds": 300,
@@ -249,7 +261,7 @@
               "Type": "Task",
               "Resource": "arn:aws:states:::ecs:runTask.sync",
               "Parameters": {
-                "TaskDefinition": "frameops-metadata",
+                "TaskDefinition": "frameops-dev-metadata",
                 "LaunchType": "FARGATE"
               },
               "TimeoutSeconds": 300,
@@ -262,10 +274,12 @@
     },
     "Finalize": {
       "Type": "Task",
-      "Resource": "arn:aws:lambda:ap-south-1:123456789012:function:frameops-finalizer",
+      "Resource": "arn:aws:lambda:ap-south-1:559050238050:function:frameops-dev-finalizer",
       "Retry": [
         {
-          "ErrorEquals": ["States.ALL"],
+          "ErrorEquals": [
+            "States.ALL"
+          ],
           "MaxAttempts": 2,
           "IntervalSeconds": 2,
           "BackoffRate": 2.0
@@ -286,7 +300,7 @@
     },
     "TerminalFailure": {
       "Type": "Fail",
-      "Cause": "Processing failed or incomplete — quarantine/DLQ",
+      "Cause": "Processing failed or incomplete \u2014 quarantine/DLQ",
       "Error": "FrameOpsTerminalFailure"
     },
     "Succeed": {

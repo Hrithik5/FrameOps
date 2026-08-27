@@ -75,6 +75,20 @@ resource "aws_ecr_repository" "thumbnail" {
   tags                 = { Project = "FrameOps", Env = var.env }
 }
 
+resource "aws_ecr_repository" "audio" {
+  name                 = "frameops-audio"
+  image_tag_mutability = "MUTABLE"
+  force_delete         = true
+  tags                 = { Project = "FrameOps", Env = var.env }
+}
+
+resource "aws_ecr_repository" "document" {
+  name                 = "frameops-document"
+  image_tag_mutability = "MUTABLE"
+  force_delete         = true
+  tags                 = { Project = "FrameOps", Env = var.env }
+}
+
 resource "aws_iam_role" "execution" {
   count = var.ecs_execution_role_arn == "" ? 1 : 0
   name  = "frameops-${var.env}-ecs-execution"
@@ -102,7 +116,7 @@ locals {
   task_role      = var.ecs_task_role_arn != "" ? var.ecs_task_role_arn : "arn:aws:iam::559050238050:role/frameops-${var.env}-ecs-worker"
 }
 
-# Metadata task — 512/1024 (Spec §44)
+# Metadata task — 512/1024 (Spec §44) — uses ECR image if pushed, else busybox for test
 resource "aws_ecs_task_definition" "metadata" {
   family                   = "frameops-${var.env}-metadata"
   requires_compatibilities = ["FARGATE"]
@@ -192,12 +206,76 @@ resource "aws_ecs_task_definition" "thumbnail" {
   tags = { Project = "FrameOps", Env = var.env }
 }
 
+# Audio task — 512/1024
+resource "aws_ecs_task_definition" "audio" {
+  family                   = "frameops-${var.env}-audio"
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  cpu                      = "512"
+  memory                   = "1024"
+  execution_role_arn       = local.execution_role
+  task_role_arn            = local.task_role
+  container_definitions = jsonencode([{
+    name      = "audio"
+    image     = "${aws_ecr_repository.audio.repository_url}:latest"
+    essential = true
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        awslogs-group         = aws_cloudwatch_log_group.ecs.name
+        awslogs-region        = var.region
+        awslogs-stream-prefix = "audio"
+      }
+    }
+    environment = [
+      { name = "ENV", value = var.env },
+      { name = "ASSETS_BUCKET", value = var.assets_bucket },
+      { name = "DATA_BUCKET", value = var.data_bucket }
+    ]
+  }])
+  tags = { Project = "FrameOps", Env = var.env }
+}
+
+# Document task — 512/1024
+resource "aws_ecs_task_definition" "document" {
+  family                   = "frameops-${var.env}-document"
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  cpu                      = "512"
+  memory                   = "1024"
+  execution_role_arn       = local.execution_role
+  task_role_arn            = local.task_role
+  container_definitions = jsonencode([{
+    name      = "document"
+    image     = "${aws_ecr_repository.document.repository_url}:latest"
+    essential = true
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        awslogs-group         = aws_cloudwatch_log_group.ecs.name
+        awslogs-region        = var.region
+        awslogs-stream-prefix = "document"
+      }
+    }
+    environment = [
+      { name = "ENV", value = var.env },
+      { name = "ASSETS_BUCKET", value = var.assets_bucket },
+      { name = "DATA_BUCKET", value = var.data_bucket }
+    ]
+  }])
+  tags = { Project = "FrameOps", Env = var.env }
+}
+
 output "cluster_arn" { value = aws_ecs_cluster.frameops.arn }
 output "cluster_name" { value = aws_ecs_cluster.frameops.name }
 output "metadata_task_arn" { value = aws_ecs_task_definition.metadata.arn }
 output "transcode_task_arn" { value = aws_ecs_task_definition.transcode.arn }
 output "thumbnail_task_arn" { value = aws_ecs_task_definition.thumbnail.arn }
+output "audio_task_arn" { value = aws_ecs_task_definition.audio.arn }
+output "document_task_arn" { value = aws_ecs_task_definition.document.arn }
 output "metadata_repo" { value = aws_ecr_repository.metadata.repository_url }
 output "transcode_repo" { value = aws_ecr_repository.transcode.repository_url }
 output "thumbnail_repo" { value = aws_ecr_repository.thumbnail.repository_url }
+output "audio_repo" { value = aws_ecr_repository.audio.repository_url }
+output "document_repo" { value = aws_ecr_repository.document.repository_url }
 output "log_group" { value = aws_cloudwatch_log_group.ecs.name }
