@@ -1,0 +1,52 @@
+{
+  "widgets": [
+    {
+      "type": "metric",
+      "properties": {
+        "title": "FrameOps — Assets Today",
+        "metrics": [["FrameOps", "AssetsIngested", { "stat": "Sum", "period": 86400 }]],
+        "region": "ap-south-1"
+      }
+    },
+    {
+      "type": "metric",
+      "properties": {
+        "title": "Success Rate %",
+        "metrics": [["FrameOps", "AssetPublished", { "stat": "Sum" }], [".", "AssetFailed", { "stat": "Sum" }]],
+        "region": "ap-south-1"
+      }
+    },
+    {
+      "type": "metric",
+      "properties": {
+        "title": "Avg Processing Duration (ms)",
+        "metrics": [["FrameOps", "JobDuration", { "stat": "Average" }]],
+        "region": "ap-south-1"
+      }
+    },
+    {
+      "type": "metric",
+      "properties": {
+        "title": "SQS Queue Depth",
+        "metrics": [["AWS/SQS", "ApproximateNumberOfMessagesVisible", { "stat": "Maximum" }]],
+        "region": "ap-south-1"
+      }
+    },
+    {
+      "type": "metric",
+      "properties": {
+        "title": "DLQ Depth",
+        "metrics": [["FrameOps", "DLQDepth", { "stat": "Maximum" }]],
+        "region": "ap-south-1"
+      }
+    },
+    {
+      "type": "metric",
+      "properties": {
+        "title": "Active Jobs",
+        "metrics": [["FrameOps", "ActiveJobs", { "stat": "Maximum" }]],
+        "region": "ap-south-1"
+      }
+    }
+  ]
+}
