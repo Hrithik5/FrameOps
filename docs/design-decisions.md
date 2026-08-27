@@ -1,12 +1,5 @@
 # FrameOps — Final Architecture Design Decisions
 
-> **Purpose:** Record *every* small decision that locked the final diagram as the authoritative architecture, with alternatives, trade-offs, and why we kept it.
-> **Source of Truth:** Final ASCII diagram (S3→EventBridge→SQS→Lambda→Step Functions→ECS Fargate→S3/DynamoDB→S3 Parquet→Glue→Athena + cross-cutting Terraform|IAM|KMS|VPC|CloudWatch|CI/CD)
-> **Locked Mode:** Local-first MVP, flat data lake, <1M volume, simple Athena search.
-> **Build Reference:** `0de6809` (42 tests, ruff/mypy clean)
-
----
-
 ## 0. Prime Directive
 
 We chose **workload justification over resume-driven sprawl** (Spec rule 7). Every AWS service must earn its place against a failure mode, query pattern, or cost boundary. The final diagram is not "all AWS" — it is "only AWS that the workload needs."
@@ -207,5 +200,3 @@ We chose **workload justification over resume-driven sprawl** (Spec rule 7). Eve
 | Layered lake | **Rejected** for <1M — flat + Athena views | If >5M or streaming MERGE needed |
 
 ---
-
-*Generated 2026-08-27 — commit after any diagram edit. Intentional deviations from Spec must be documented per rule 2.*
