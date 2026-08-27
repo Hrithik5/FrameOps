@@ -120,6 +120,7 @@ FrameOps/
 # tests/unit/test_bootstrap.py
 def test_package_importable():
     import services
+
     assert services is not None
 ```
 
@@ -204,27 +205,43 @@ git commit -m "feat: bootstrap FrameOps repo - Python 3.11, tooling, local harne
 import pytest
 from data.schemas.events import AssetCreatedEvent
 
+
 def test_asset_created_valid():
     evt = AssetCreatedEvent(
-        event_type="ASSET_CREATED", event_version="1.0",
-        asset_id="asset-123", asset_type="video",
-        bucket="frameops-raw", object_key="raw/video/asset-123/source.mp4",
-        object_version="v1", checksum="abc", created_at="2026-08-27T00:00:00Z"
+        event_type="ASSET_CREATED",
+        event_version="1.0",
+        asset_id="asset-123",
+        asset_type="video",
+        bucket="frameops-raw",
+        object_key="raw/video/asset-123/source.mp4",
+        object_version="v1",
+        checksum="abc",
+        created_at="2026-08-27T00:00:00Z",
     )
     assert evt.asset_type == "video"
+
 
 def test_asset_created_rejects_unknown_type():
     with pytest.raises(Exception):
         AssetCreatedEvent(
-            event_type="ASSET_CREATED", event_version="1.0",
-            asset_id="a", asset_type="tiktok", bucket="b",
-            object_key="k", object_version="v1", checksum="c", created_at="2026-08-27T00:00:00Z"
+            event_type="ASSET_CREATED",
+            event_version="1.0",
+            asset_id="a",
+            asset_type="tiktok",
+            bucket="b",
+            object_key="k",
+            object_version="v1",
+            checksum="c",
+            created_at="2026-08-27T00:00:00Z",
         )
+
 
 def test_breaking_change_requires_version_bump():
     # Old code reading v1 must reject v2 event with new required field
     with pytest.raises(Exception):
-        AssetCreatedEvent.model_validate({"event_type":"ASSET_CREATED","event_version":"2.0","asset_id":"x"})
+        AssetCreatedEvent.model_validate(
+            {"event_type": "ASSET_CREATED", "event_version": "2.0", "asset_id": "x"}
+        )
 ```
 
 - [ ] **Step 2: Run to verify fail**
@@ -239,7 +256,8 @@ Expected: FAIL — module not found
 from pydantic import BaseModel, Field
 from typing import Literal
 
-AssetType = Literal["video","image","audio","document","other"]
+AssetType = Literal["video", "image", "audio", "document", "other"]
+
 
 class AssetCreatedEvent(BaseModel):
     event_type: Literal["ASSET_CREATED"] = "ASSET_CREATED"
@@ -259,30 +277,64 @@ class AssetCreatedEvent(BaseModel):
 # data/schemas/asset.py
 from pydantic import BaseModel, Field
 from typing import Literal
-AssetType = Literal["video","image","audio","document","other"]
-Status = Literal["INGESTED","VALIDATED","PROCESSING","ENRICHED","PUBLISHED","FAILED"]
+
+AssetType = Literal["video", "image", "audio", "document", "other"]
+Status = Literal["INGESTED", "VALIDATED", "PROCESSING", "ENRICHED", "PUBLISHED", "FAILED"]
+
+
 class UniversalAssetMetadata(BaseModel):
-    asset_id: str; asset_type: AssetType; source: str = "upload"
-    original_uri: str; status: Status; file_name: str; mime_type: str
-    file_size_bytes: int = Field(gt=0); checksum: str
-    created_at: str; processed_at: str | None = None
+    asset_id: str
+    asset_type: AssetType
+    source: str = "upload"
+    original_uri: str
+    status: Status
+    file_name: str
+    mime_type: str
+    file_size_bytes: int = Field(gt=0)
+    checksum: str
+    created_at: str
+    processed_at: str | None = None
     processing_duration_ms: int | None = None
+
 
 # data/schemas/jobs.py
 from pydantic import BaseModel
 from typing import Literal
-JobStatus = Literal["PENDING","RUNNING","SUCCEEDED","FAILED","RETRY","TERMINAL_FAILURE"]
+
+JobStatus = Literal["PENDING", "RUNNING", "SUCCEEDED", "FAILED", "RETRY", "TERMINAL_FAILURE"]
+
+
 class Job(BaseModel):
-    job_id: str; asset_id: str; job_type: str; status: JobStatus = "PENDING"
-    attempt: int = 0; retry_count: int = 0; duration_ms: int | None = None
+    job_id: str
+    asset_id: str
+    job_type: str
+    status: JobStatus = "PENDING"
+    attempt: int = 0
+    retry_count: int = 0
+    duration_ms: int | None = None
+
 
 # data/schemas/worker.py
 from pydantic import BaseModel
 from typing import Literal
+
+
 class WorkerInput(BaseModel):
-    asset_id: str; operation: str; input_uri: str; output_uri: str; pipeline_version: str = "1.0"
+    asset_id: str
+    operation: str
+    input_uri: str
+    output_uri: str
+    pipeline_version: str = "1.0"
+
+
 class WorkerOutput(BaseModel):
-    asset_id: str; operation: str; status: Literal["SUCCEEDED","FAILED"]; output_uri: str; duration_ms: int; error_code: str | None = None
+    asset_id: str
+    operation: str
+    status: Literal["SUCCEEDED", "FAILED"]
+    output_uri: str
+    duration_ms: int
+    error_code: str | None = None
+
 
 # data/schemas/lineage.py, technical.py similarly typed
 ```
@@ -321,13 +373,18 @@ git commit -m "feat: add versioned contracts - ASSET_CREATED, asset, jobs, worke
 # tests/unit/test_plan.py
 from services.processor.plan import get_plan
 
+
 def test_video_plan_has_parallel_ops():
     plan = get_plan("video")
     assert "metadata" in plan and "transcode_1080p" in plan and "thumbnail" in plan
 
+
 def test_unknown_type_raises():
     import pytest
-    with pytest.raises(ValueError): get_plan("tiktok")
+
+    with pytest.raises(ValueError):
+        get_plan("tiktok")
+
 
 def test_new_operation_does_not_change_ingestion_contract():
     plan_before = get_plan("image")
@@ -345,12 +402,14 @@ Expected: FAIL — module not found
 ```python
 # services/processor/plan.py
 PLAN_REGISTRY: dict[str, list[str]] = {
-    "video": ["metadata","transcode_1080p","transcode_720p","thumbnail"],
-    "image": ["metadata","resize","thumbnail","format_conversion"],
-    "audio": ["metadata","normalize","format_conversion"],
-    "document": ["integrity","metadata_pages"],
+    "video": ["metadata", "transcode_1080p", "transcode_720p", "thumbnail"],
+    "image": ["metadata", "resize", "thumbnail", "format_conversion"],
+    "audio": ["metadata", "normalize", "format_conversion"],
+    "document": ["integrity", "metadata_pages"],
     "other": ["metadata"],
 }
+
+
 def get_plan(asset_type: str) -> list[str]:
     if asset_type not in PLAN_REGISTRY:
         raise ValueError(f"unsupported asset_type: {asset_type}")
@@ -362,22 +421,33 @@ def get_plan(asset_type: str) -> list[str]:
 ```python
 # services/processor/idempotency.py
 import hashlib
+
+
 def deterministic_asset_id(bucket: str, key: str, version: str) -> str:
     h = hashlib.sha256(f"{bucket}/{key}#{version}".encode()).hexdigest()[:16]
     return f"asset-{h}"
+
+
 def output_uri_for(asset_id: str, operation: str, pipeline_version: str) -> str:
     return f"s3://frameops-assets-dev/processed/{asset_id}/{operation}/v{pipeline_version}/output"
+
 
 # services/validator/core.py
 from data.schemas.events import AssetCreatedEvent
 from pydantic import BaseModel
 from typing import Literal
+
+
 class ValidationResult(BaseModel):
-    valid: bool; reason: str | None = None; action: Literal["proceed","quarantine"]
+    valid: bool
+    reason: str | None = None
+    action: Literal["proceed", "quarantine"]
+
+
 def validate_asset(evt: AssetCreatedEvent) -> ValidationResult:
     if not evt.object_key or not evt.checksum:
         return ValidationResult(valid=False, reason="missing key/checksum", action="quarantine")
-    if evt.asset_type not in ("video","image","audio","document","other"):
+    if evt.asset_type not in ("video", "image", "audio", "document", "other"):
         return ValidationResult(valid=False, reason="unsupported type", action="quarantine")
     return ValidationResult(valid=True, action="proceed")
 ```
@@ -421,11 +491,18 @@ import tempfile, pathlib
 from services.processor.thumbnail import run_thumbnail
 from data.schemas.worker import WorkerInput
 
+
 def test_thumbnail_idempotent_and_retry_safe(tmp_path):
-    inp = WorkerInput(asset_id="asset-1", operation="thumbnail",
-                      input_uri=str(tmp_path / "in.jpg"), output_uri=str(tmp_path / "out.jpg"))
+    inp = WorkerInput(
+        asset_id="asset-1",
+        operation="thumbnail",
+        input_uri=str(tmp_path / "in.jpg"),
+        output_uri=str(tmp_path / "out.jpg"),
+    )
     # create tiny input
-    from PIL import Image; Image.new("RGB",(10,10),"red").save(inp.input_uri)
+    from PIL import Image
+
+    Image.new("RGB", (10, 10), "red").save(inp.input_uri)
     out1 = run_thumbnail(inp)
     out2 = run_thumbnail(inp)  # second call should not duplicate / should succeed
     assert out1.status == "SUCCEEDED" and out2.status == "SUCCEEDED"
@@ -444,15 +521,39 @@ Expected: FAIL — not implemented
 import time, pathlib
 from data.schemas.worker import WorkerInput, WorkerOutput
 from PIL import Image
+
+
 def run_thumbnail(inp: WorkerInput) -> WorkerOutput:
     start = time.time()
     try:
         if pathlib.Path(inp.output_uri).exists():
-            return WorkerOutput(asset_id=inp.asset_id, operation=inp.operation, status="SUCCEEDED", output_uri=inp.output_uri, duration_ms=0)
-        img = Image.open(inp.input_uri); img.thumbnail((128,128)); img.save(inp.output_uri)
-        return WorkerOutput(asset_id=inp.asset_id, operation=inp.operation, status="SUCCEEDED", output_uri=inp.output_uri, duration_ms=int((time.time()-start)*1000))
+            return WorkerOutput(
+                asset_id=inp.asset_id,
+                operation=inp.operation,
+                status="SUCCEEDED",
+                output_uri=inp.output_uri,
+                duration_ms=0,
+            )
+        img = Image.open(inp.input_uri)
+        img.thumbnail((128, 128))
+        img.save(inp.output_uri)
+        return WorkerOutput(
+            asset_id=inp.asset_id,
+            operation=inp.operation,
+            status="SUCCEEDED",
+            output_uri=inp.output_uri,
+            duration_ms=int((time.time() - start) * 1000),
+        )
     except Exception as e:
-        return WorkerOutput(asset_id=inp.asset_id, operation=inp.operation, status="FAILED", output_uri=inp.output_uri, duration_ms=int((time.time()-start)*1000), error_code=str(e))
+        return WorkerOutput(
+            asset_id=inp.asset_id,
+            operation=inp.operation,
+            status="FAILED",
+            output_uri=inp.output_uri,
+            duration_ms=int((time.time() - start) * 1000),
+            error_code=str(e),
+        )
+
 
 # services/processor/metadata.py — reads image size via Pillow; video branch shells ffprobe if available else mock
 # services/processor/document.py — pypdf page_count
@@ -490,15 +591,18 @@ git commit -m "feat: local processors - metadata, thumbnail, transcode, audio, d
 # tests/integration/test_workflow.py
 from workflows.processing.simulator import simulate
 
+
 def test_parallel_metadata_and_thumbnail():
-    result = simulate(asset_type="image", operations=["metadata","thumbnail"])
-    assert result.status in ("PUBLISHED","FAILED")
+    result = simulate(asset_type="image", operations=["metadata", "thumbnail"])
+    assert result.status in ("PUBLISHED", "FAILED")
     assert "metadata" in result.job_results and "thumbnail" in result.job_results
+
 
 def test_finalizer_requires_all_required_ops():
     from services.finalizer.handler import finalize
-    assert finalize("a1", ["metadata","thumbnail"], {"metadata":"SUCCEEDED"}) == "FAILED"
-    assert finalize("a1", ["metadata"], {"metadata":"SUCCEEDED"}) == "PUBLISHED"
+
+    assert finalize("a1", ["metadata", "thumbnail"], {"metadata": "SUCCEEDED"}) == "FAILED"
+    assert finalize("a1", ["metadata"], {"metadata": "SUCCEEDED"}) == "PUBLISHED"
 ```
 
 - [ ] **Step 2: Run — FAIL**
@@ -534,7 +638,7 @@ Expected: FAIL
 
 ```python
 # services/finalizer/handler.py
-def finalize(asset_id: str, required_ops: list[str], job_results: dict[str,str]) -> str:
+def finalize(asset_id: str, required_ops: list[str], job_results: dict[str, str]) -> str:
     for op in required_ops:
         if job_results.get(op) != "SUCCEEDED":
             return "FAILED"
@@ -577,9 +681,16 @@ import boto3
 from moto import mock_aws
 from services.validator.handler import lambda_handler
 
+
 @mock_aws
 def test_duplicate_event_idempotent():
-    evt = {"Records":[{"body":'{"event_type":"ASSET_CREATED","event_version":"1.0","asset_id":"a1","asset_type":"image","bucket":"b","object_key":"k","object_version":"v1","checksum":"c","created_at":"2026-08-27T00:00:00Z"}'}]}
+    evt = {
+        "Records": [
+            {
+                "body": '{"event_type":"ASSET_CREATED","event_version":"1.0","asset_id":"a1","asset_type":"image","bucket":"b","object_key":"k","object_version":"v1","checksum":"c","created_at":"2026-08-27T00:00:00Z"}'
+            }
+        ]
+    }
     lambda_handler(evt, None)
     lambda_handler(evt, None)  # duplicate
     # assert single DynamoDB item / single SFN execution (mocked)
@@ -598,6 +709,8 @@ Expected: FAIL
 import json
 from services.validator.core import validate_asset
 from data.schemas.events import AssetCreatedEvent
+
+
 def lambda_handler(event, context):
     for record in event.get("Records", []):
         body = json.loads(record["body"] if "body" in record else json.dumps(record))
@@ -643,11 +756,14 @@ git commit -m "feat: ingestion - SQS+DLQ, S3, EventBridge TF + Lambda validator 
 # tests/integration/test_state.py
 from moto import mock_aws
 import boto3
+
+
 @mock_aws
 def test_conditional_write_prevents_duplicate():
     from services.processor.state import put_asset_if_not_exists
-    assert put_asset_if_not_exists({"PK":"ASSET#a1","SK":"ASSET#a1"}) is True
-    assert put_asset_if_not_exists({"PK":"ASSET#a1","SK":"ASSET#a1"}) is False
+
+    assert put_asset_if_not_exists({"PK": "ASSET#a1", "SK": "ASSET#a1"}) is True
+    assert put_asset_if_not_exists({"PK": "ASSET#a1", "SK": "ASSET#a1"}) is False
 ```
 
 - [ ] **Step 2: Implement DynamoDB TF + helpers**
@@ -679,8 +795,19 @@ Commit: `feat: DynamoDB state - conditional writes, GSIs, helpers`
 def test_dq_rejects_zero_file_size(tmp_path):
     from data.schemas.asset import UniversalAssetMetadata
     import pytest
+
     with pytest.raises(Exception):
-        UniversalAssetMetadata(asset_id="a", asset_type="video", original_uri="s3://b/k", status="PUBLISHED", file_name="f.mp4", mime_type="video/mp4", file_size_bytes=0, checksum="c", created_at="2026-08-27T00:00:00Z")
+        UniversalAssetMetadata(
+            asset_id="a",
+            asset_type="video",
+            original_uri="s3://b/k",
+            status="PUBLISHED",
+            file_name="f.mp4",
+            mime_type="video/mp4",
+            file_size_bytes=0,
+            checksum="c",
+            created_at="2026-08-27T00:00:00Z",
+        )
 ```
 
 - [ ] **Step 2: Implement writer + TF**
