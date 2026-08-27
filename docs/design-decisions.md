@@ -1,9 +1,9 @@
 # FrameOps — Final Architecture Design Decisions
 
 > **Purpose:** Record *every* small decision that locked the final diagram as the authoritative architecture, with alternatives, trade-offs, and why we kept it.
-> **Source of Truth:** `FrameOps_Master_Project_Specification_v1.docx` (50 sections, Verification PASS) + your final ASCII diagram (S3→EventBridge→SQS→Lambda→Step Functions→ECS Fargate→S3/DynamoDB→S3 Parquet→Glue→Athena + cross-cutting Terraform|IAM|KMS|VPC|CloudWatch|CI/CD)
-> **Locked Mode:** Local-first MVP, `ap-south-1`, flat data lake, <1M volume, simple Athena search.
-> **Build Reference:** `0de6809` (42 tests, ruff/mypy clean), `docs/superpowers/specs/2026-08-27-frameops-design.md:1`, `docs/superpowers/plans/2026-08-27-frameops-implementation.md:1`
+> **Source of Truth:** Final ASCII diagram (S3→EventBridge→SQS→Lambda→Step Functions→ECS Fargate→S3/DynamoDB→S3 Parquet→Glue→Athena + cross-cutting Terraform|IAM|KMS|VPC|CloudWatch|CI/CD)
+> **Locked Mode:** Local-first MVP, flat data lake, <1M volume, simple Athena search.
+> **Build Reference:** `0de6809` (42 tests, ruff/mypy clean)
 
 ---
 
@@ -182,7 +182,7 @@ We chose **workload justification over resume-driven sprawl** (Spec §50 rule 7)
 
 ## 13. Why This Is Final (Not Just "Works")
 
-1. **Spec-faithful:** Every §6 principle, §8 boundary, §10 plan, §11 lifecycle, §12 job states, §15 worker contract, §16 event version, §17 universal metadata, §18 lineage, §19-20 lake, §21 DynamoDB, §22 idempotency, §23 failures, §24 DQ, §25 observability (6 alarms, not per-asset paging), §26-27 security (least-privilege Table 9, short-lived task creds, bucket deny public, separate dev/prod), §32 Terraform, §34 local harness, §35 testing layers, §36 CI/CD, §37 reliability, §40 MVP 16 items, §42-43 acceptance/done — mapped in `docs/superpowers/plans/2026-08-27-frameops-implementation.md:114` and proven `pytest -q 42 passed / mypy clean / ruff clean`.
+1. **Spec-faithful:** Every §6 principle, §8 boundary, §10 plan, §11 lifecycle, §12 job states, §15 worker contract, §16 event version, §17 universal metadata, §18 lineage, §19-20 lake, §21 DynamoDB, §22 idempotency, §23 failures, §24 DQ, §25 observability (6 alarms, not per-asset paging), §26-27 security (least-privilege Table 9, short-lived task creds, bucket deny public, separate dev/prod), §32 Terraform, §34 local harness, §35 testing layers, §36 CI/CD, §37 reliability, §40 MVP 16 items, §42-43 acceptance/done — proven `pytest -q 42 passed / mypy clean / ruff clean`.
 
 2. **Workload-sized:** At <1M, flat + SQS buffering (100/hr → 20k burst §30) + bounded Fargate concurrency (10 dev) + `year/month/day` partition + Snappy (§19) is cheapest that still observable (dashboard `dashboard.json:6` widgets: Assets Today, Success 98.7% example, 42s avg, Queue Depth 82, DLQ 0). No GPU, MediaConvert, AI before benchmark (§45).
 

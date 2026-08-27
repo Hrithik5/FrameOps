@@ -233,12 +233,8 @@ CI (`.github/workflows/ci.yml`) runs `ruff`, `mypy`, `pytest`, `terraform fmt/va
 
 ## Documentation
 
-- [Master specification](FrameOps_Master_Project_Specification_v1.docx) — 50 sections, what and why, verification PASS
-- [Architecture design](docs/superpowers/specs/2026-08-27-frameops-design.md) — component breakdown, data contracts, S3/DynamoDB, TF wiring
-- [Implementation plan](docs/superpowers/plans/2026-08-27-frameops-implementation.md) — 13 tasks, file structure, TDD steps
-- [Design decisions](docs/design-decisions.md) — 14 locked decisions, why flat lake (<1M) won, when to revisit medallion
+- [Design decisions](docs/design-decisions.md) — 14 locked decisions, why flat lake (<1M) won, when to revisit
 - [Runbook](docs/runbook.md) — local dev, troubleshooting, deployment, rollback
-- [Demo scenarios](docs/demo.md) — 8 end-to-end traces (video/image/audio/pdf, duplicate, corrupt, burst, lake)
 
 ## Tech Stack
 
