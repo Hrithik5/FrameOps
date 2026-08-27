@@ -95,22 +95,12 @@ resource "aws_lambda_event_source_mapping" "sqs" {
   function_response_types            = ["ReportBatchItemFailures"]
 }
 
-# Finalizer Lambda (PUBLISHED gate )
+# Finalizer Lambda — real handler with audit (uses same build as validator)
 data "archive_file" "finalizer_placeholder" {
   type        = "zip"
   output_path = "${path.module}/finalizer_placeholder.zip"
-  source {
-    content  = <<-PYTHON
-def lambda_handler(event, context):
-    required = event.get("required_ops", [])
-    results = event.get("job_results", {})
-    for op in required:
-        if results.get(op) != "SUCCEEDED":
-            return {"status": "FAILED"}
-    return {"status": "PUBLISHED"}
-PYTHON
-    filename = "handler.py"
-  }
+  source_dir  = "${path.module}/../../../../build/lambda_validator"
+  excludes    = ["__pycache__"]
 }
 
 resource "aws_cloudwatch_log_group" "finalizer" {
@@ -124,13 +114,20 @@ resource "aws_cloudwatch_log_group" "finalizer" {
 
 resource "aws_lambda_function" "finalizer" {
   function_name    = "frameops-${var.env}-finalizer"
-  handler          = "handler.lambda_handler"
+  handler          = "services.finalizer.handler.lambda_handler"
   runtime          = "python3.11"
   filename         = data.archive_file.finalizer_placeholder.output_path
   source_code_hash = data.archive_file.finalizer_placeholder.output_base64sha256
   role             = var.lambda_role_arn != "" ? var.lambda_role_arn : "arn:aws:iam::YOUR_AWS_ACCOUNT_ID:role/frameops-${var.env}-lambda-validator"
   timeout          = 30
   memory_size      = 256
+  environment {
+    variables = {
+      ENV          = var.env
+      DATA_BUCKET  = var.assets_bucket != "" ? replace(var.assets_bucket, "assets", "data") : ""
+      AUDIT_BUCKET = var.assets_bucket != "" ? replace(var.assets_bucket, "assets", "data") : ""
+    }
+  }
   tags = {
     Project = "FrameOps"
     Env     = var.env

@@ -23,12 +23,13 @@ resource "aws_iam_role" "lambda_validator" {
 resource "aws_iam_role_policy" "lambda_validator" {
   role = aws_iam_role.lambda_validator.id
   policy = jsonencode({
-    Version = "2012-10-17",
+    Version = "2012-10-17"
     Statement = [
       { Effect = "Allow", Action = ["s3:GetObject"], Resource = "arn:aws:s3:::frameops-assets-${var.env}/raw/*" },
       { Effect = "Allow", Action = ["sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:GetQueueAttributes"], Resource = "arn:aws:sqs:${var.region}:*:frameops-${var.env}-*" },
       { Effect = "Allow", Action = ["dynamodb:PutItem", "dynamodb:GetItem"], Resource = "arn:aws:dynamodb:${var.region}:*:table/frameops-${var.env}-*" },
       { Effect = "Allow", Action = ["states:StartExecution"], Resource = "arn:aws:states:${var.region}:*:stateMachine:frameops-${var.env}-*" },
+      { Effect = "Allow", Action = ["s3:PutObject"], Resource = "arn:aws:s3:::frameops-data-${var.env}-YOUR_AWS_ACCOUNT_ID/audit/*" },
       { Effect = "Allow", Action = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"], Resource = "arn:aws:logs:${var.region}:*:log-group:/frameops/${var.env}:*" }
     ]
   })
@@ -45,10 +46,11 @@ resource "aws_iam_role" "ecs_worker" {
 resource "aws_iam_role_policy" "ecs_worker" {
   role = aws_iam_role.ecs_worker.id
   policy = jsonencode({
-    Version = "2012-10-17",
+    Version = "2012-10-17"
     Statement = [
       { Effect = "Allow", Action = ["s3:GetObject"], Resource = "arn:aws:s3:::frameops-assets-${var.env}/raw/*" },
       { Effect = "Allow", Action = ["s3:PutObject"], Resource = "arn:aws:s3:::frameops-assets-${var.env}/processed/*" },
+      { Effect = "Allow", Action = ["s3:PutObject"], Resource = "arn:aws:s3:::frameops-data-${var.env}-YOUR_AWS_ACCOUNT_ID/audit/*" },
       { Effect = "Allow", Action = ["dynamodb:UpdateItem"], Resource = "arn:aws:dynamodb:${var.region}:*:table/frameops-${var.env}-*" },
       { Effect = "Allow", Action = ["logs:PutLogEvents", "logs:CreateLogStream"], Resource = "*" }
     ]

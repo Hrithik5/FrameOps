@@ -13,7 +13,7 @@ Requires Python 3.11+, ffmpeg/ffprobe, and AWS credentials for cloud deployment 
 
 ```bash
 pip install -e ".[dev]"
-make test        # 42 tests: unit + contract + integration + workflow + e2e
+make test        # 45 tests: unit + contract + integration + workflow + e2e + audit
 make lint && make type
 ```
 
@@ -102,6 +102,7 @@ S3 Raw Assets (video | image | audio | pdf)
 | `services/reliability/` | `retry.py` classify transient/permanent/unknown + backoff, `quarantine.py` s3://.../quarantine/, `dlq.py` SQS redrive |
 | `services/observability/` | `metrics.py` EMF (SQS depth, AssetPublished, JobDuration), `alarm_config.py` 6 alarms |
 | `services/security/` | `iam.py` least-privilege Table 9, `redact.py` AKIA + secret redaction |
+| `services/audit/` | `writer.py` `AuditRecord` + `audit/year/month/day/asset_id/job_id.json` (asset_id, job_id, event_id, pipeline_version, operations, status, failure_reason, outputs), `build_audit` + `write_audit_s3` |
 | `workflows/processing/` | `definition.asl.json` static dev, `definition.asl.json.tpl` templated for AWS (Cluster + NetworkConfiguration), `simulator.py` ThreadPoolExecutor(4) local |
 | `data/schemas/` | Pydantic v2 contracts: `events.py` ASSET_CREATED v1.0, `asset.py` UniversalAssetMetadata, `technical.py` per-type, `jobs.py` state machine, `worker.py` WorkerInput/Output, `lineage.py` |
 | `infrastructure/terraform/modules/` | `s3`, `sqs`, `eventbridge`, `lambda`, `step-functions`, `ecs`, `dynamodb`, `glue`, `athena`, `iam`, `kms`, `vpc`, `monitoring` |
@@ -113,7 +114,8 @@ Key safety properties:
 - **Failure taxonomy is explicit** — transient (`Timeout`, `Throttling`) → bounded `3 x 2s capped 30s` retry, permanent (`CorruptAsset`, `UnsupportedFormat`) → `s3://.../quarantine/` + `TERMINAL_FAILURE`, delivery → DLQ `maxReceiveCount 5`, unknown → freeze + alert + preserve evidence; raw remains recoverable.
 - **Parallelism is bounded** — `ParallelImage`/`ParallelVideo` branches run with per-state `Retry`/`Catch`/`TimeoutSeconds`, and `vpc` private subnets + `SQS visibility 300s` bound burst (100/hr normal, 20k/10m burst).
 - **Originals immutable** — `s3://.../raw/` never overwritten; `processed/` and `quarantine/` are separate prefixes; S3 versioning + KMS + `block_public_*`.
-- **Least privilege by default** — IAM roles per Table 9 (Lambda `s3:GetObject`/`dynamodb:PutItem`/`states:StartExecution`, ECS `s3:PutObject`/`dynamodb:UpdateItem`), task-role credentials, no secrets in logs/code/TF (`redact.py`).
+- **Least privilege by default** — IAM roles per Table 9 (Lambda `s3:GetObject`/`dynamodb:PutItem`/`states:StartExecution` + `s3:PutObject` to `audit/`, ECS `s3:PutObject` to `audit/`/`dynamodb:UpdateItem`), task-role credentials, no secrets in logs/code/TF (`redact.py`).
+- **S3 audit trail** — every `PUBLISHED`/`FAILED` writes `s3://.../audit/year/month/day/asset_id/job_id.json` (`asset_id`, `job_id`, `event_id`, `pipeline_version`, `operations`, `started_at`, `completed_at`, `status`, `failure_reason`, `outputs`) via `services/audit/writer.py` + `services/finalizer/handler.py:finalize_and_audit` (fire-and-forget, never blocks publish).
 
 ## Configuration
 
@@ -195,8 +197,8 @@ Twelve reusable modules wired by `dev/` and `prod/` environment roots — valida
 | `modules/eventbridge` | Rule `frameops-dev-s3-object-created` (`source aws.s3` `Object Created` `prefix frameops-assets-`) → SQS |
 | `modules/dynamodb` | Table `frameops-dev-assets` (`PK/SK`, `GSI1` `GSI1PK/GSI1SK`, `PAY_PER_REQUEST`, PITR, SSE) |
 | `modules/iam` | `frameops-dev-lambda-validator` (`s3:GetObject`, `sqs:ReceiveMessage`, `dynamodb:PutItem`, `states:StartExecution`) + `frameops-dev-ecs-worker` + `frameops-dev-sfn` |
-| `modules/lambda` | `frameops-dev-validator` + `frameops-dev-finalizer` (`python3.11`, `256M`, `30s`, `TABLE_NAME`/`STATE_MACHINE_ARN` env, `reportBatchItemFailures`) from `build/lambda_validator` (real handler, fallback without pydantic) |
-| `modules/step-functions` | State machine `frameops-dev-processing` from `definition.asl.json.tpl` (`templatefile` with `cluster_arn`, `private_subnets`, `ecs_security_group`, `env`, `region`), IAM `ecs:RunTask`/`iam:PassRole`/`lambda:InvokeFunction` |
+| `modules/lambda` | `frameops-dev-validator` + `frameops-dev-finalizer` (`python3.11`, `256M`, `30s`, `TABLE_NAME`/`STATE_MACHINE_ARN`/`DATA_BUCKET` env, `reportBatchItemFailures`) from `build/lambda_validator` (vendored `pydantic` + `services/audit`, always Pydantic contract validation) |
+| `modules/step-functions` | State machine `frameops-dev-processing` from `definition.asl.json.tpl` (`templatefile` with `cluster_arn`, `private_subnets`, `ecs_security_group`, `env`, `region`), IAM `ecs:RunTask`/`iam:PassRole`/`lambda:InvokeFunction`, `aws_cloudwatch_log_resource_policy` for `states.amazonaws.com` + `logging_configuration` `ALL` + `tracing` |
 | `modules/ecs` | Cluster `frameops-dev` (Container Insights), 5 ECR repos + 5 Fargate task defs (`metadata/thumbnail 512/1024`, `transcode 1024/2048`, `audio/document 512/1024`), execution role `AmazonECSTaskExecutionRolePolicy`, log group `/ecs/frameops-dev` |
 | `modules/glue` | Database `frameops_dev` + 4 crawlers (`asset_metadata`, `technical_metadata`, `processing_jobs`, `asset_lineage`) on `s3://frameops-data-...` |
 | `modules/athena` | Workgroup `frameops-dev` (results `s3://.../athena-results/`, `SSE_S3`, engine v3) |
@@ -219,9 +221,9 @@ terraform -chdir=infrastructure/terraform/environments/dev/YOUR_AWS_REGION destr
 
 ```bash
 pip install -e ".[dev]"
-pytest -q                 # 42 tests (18 unit + 24 integration)
+pytest -q                 # 45 tests (21 unit + 24 integration, includes audit)
 pytest tests/ -v          # verbose
-pytest tests/reliability/ -v
+pytest tests/audit/ -v
 ruff check .              # all checks passed
 ruff format .
 mypy services data        # Success: no issues found in 37 files
@@ -243,10 +245,7 @@ Python 3.11+, Pydantic v2, pydantic-settings, boto3, moto, pyarrow, Pillow, pypd
 ## Limitations
 
 - Real `ffmpeg` only in Fargate images (`Dockerfiles/*`); local `transcode` is a copy stub — Fargate runs the real binary.
-- `pydantic` is not vendored into the Lambda zip by default; the handler falls back to simple `missing fields` checks when `HAS_SCHEMAS` is false — validation still quarantines, but full contract checks require a layer.
-- Step Functions logging was disabled for initial `apply` to avoid `AccessDeniedException: Log Destination` (needs `aws_cloudwatch_log_resource_policy` for `states.amazonaws.com`) — re-enable after adding the policy.
 - `hash_key`/`range_key` in `modules/dynamodb` show deprecation warnings (`Use key_schema instead`) on provider `6.62.0`, but `key_schema` block is not yet supported — warning is harmless, `Success!` still.
-- Run-level counters live on `CloudWatch` metrics and `DynamoDB` items; per-run S3 audit beyond `SQS`/`SFN` history is not yet persisted.
 - `terraform.tfstate` backend bucket `frameops-tfstate-dev-YOUR_AWS_REGION` must exist and be versioned before `init -reconfigure` with `use_lockfile` (S3 native, no DynamoDB lock table).
 
 The full idempotent loop (`S3` → duplicate `ASSET_CREATED` → `attribute_not_exists(PK)` → `duplicate` skip, and `thumbnail` retry → `output exists` → `0ms` idempotent) is proven in `tests/integration/test_ingestion.py` and `tests/unit/test_processors.py`, and the `PUBLISHED` gate in `tests/unit/test_finalizer.py`.
