@@ -92,8 +92,10 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
                 # Direct S3 notification (fallback)
                 rec = body["Records"][0]
                 s3 = rec.get("s3", {})
+                bucket_name = s3.get("bucket", {}).get("name", "")
+                object_key = s3.get("object", {}).get("key", "")
                 inner = _build_asset_created_from_s3(
-                    {"bucket": {"name": s3.get("bucket", {}).get("name", "")}, "object": {"key": s3.get("object", {}).get("key", "")}}
+                    {"bucket": {"name": bucket_name}, "object": {"key": object_key}}
                 )
             # else assume inner is already ASSET_CREATED
 
@@ -105,7 +107,13 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
                     continue
                 res = validate_asset(evt)
                 if not res.valid:
-                    results.append({"asset_id": getattr(evt, "asset_id", "unknown"), "status": "quarantine", "reason": res.reason})
+                    results.append(
+                        {
+                            "asset_id": getattr(evt, "asset_id", "unknown"),
+                            "status": "quarantine",
+                            "reason": res.reason,
+                        }
+                    )
                     continue
                 asset_id = evt.asset_id
                 asset_type = evt.asset_type
@@ -120,11 +128,14 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
                 payload = inner
 
             if not use_aws:
-                results.append({"asset_id": asset_id, "status": "proceed", "asset_type": asset_type})
+                results.append(
+                    {"asset_id": asset_id, "status": "proceed", "asset_type": asset_type}
+                )
                 continue
 
             # Idempotent DynamoDB Put — Spec §22 ConditionExpression
             try:
+                assert dynamodb is not None
                 dynamodb.put_item(
                     Item={
                         "PK": f"ASSET#{asset_id}",
@@ -139,31 +150,45 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
                     ConditionExpression="attribute_not_exists(PK)",
                 )
             except Exception as e:
-                # ConditionalCheckFailed means duplicate — check status and skip StartExecution
                 if "ConditionalCheckFailed" in str(e):
-                    results.append({"asset_id": asset_id, "status": "duplicate", "reason": "already ingested"})
+                    results.append(
+                        {
+                            "asset_id": asset_id,
+                            "status": "duplicate",
+                            "reason": "already ingested",
+                        }
+                    )
                     continue
                 # Other DynamoDB errors → retry via SQS (raise to trigger SQS redelivery)
                 raise
 
             # Start Step Functions execution — Spec §14
             try:
+                assert sfn is not None
                 sfn.start_execution(
                     stateMachineArn=state_machine_arn,
                     name=f"{asset_id}-{payload.get('object_version', 'v1')}"[:80],
-                    input=json.dumps({"asset_id": asset_id, "asset_type": asset_type, **payload}),
+                    input=json.dumps(
+                        {"asset_id": asset_id, "asset_type": asset_type, **payload}
+                    ),
                 )
-                results.append({"asset_id": asset_id, "status": "proceed", "asset_type": asset_type})
-            except Exception as e:
-                # If SFN start fails, we should not leave DynamoDB orphan — but for MVP, log and proceed to DLQ via exception
+                results.append(
+                    {"asset_id": asset_id, "status": "proceed", "asset_type": asset_type}
+                )
+            except Exception:
+                # If SFN start fails, let SQS redelivery handle it (Spec §23)
                 raise
 
         except Exception as e:
-            # Any unhandled → bubble to SQS for retry/DLQ (Spec §23)
-            # For batch, we return failure for this record; Lambda will report batch item failure
             import traceback
 
-            results.append({"status": "error", "reason": str(e)[:500], "trace": traceback.format_exc()[:500]})
+            results.append(
+                {
+                    "status": "error",
+                    "reason": str(e)[:500],
+                    "trace": traceback.format_exc()[:500],
+                }
+            )
 
     # For SQS ReportBatchItemFailures, we should raise if any error, but for MVP return results
     return {"results": results}
