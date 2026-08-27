@@ -70,13 +70,17 @@ resource "aws_sfn_state_machine" "processing" {
   name       = "frameops-${var.env}-processing"
   role_arn   = var.sfn_role_arn != "" ? var.sfn_role_arn : aws_iam_role.sfn[0].arn
   definition = var.definition_json
-  logging_configuration {
-    level                  = "ALL"
-    include_execution_data = true
-    log_destination        = "${aws_cloudwatch_log_group.sfn.arn}:*"
-  }
-  tracing_configuration { enabled = true }
-  tags = { Project = "FrameOps", Env = var.env }
+  # logging_configuration disabled for initial apply — SFN log delivery requires
+  # additional CW resource policy (AccessDeniedException fix). Re-enable after
+  # adding aws_cloudwatch_log_resource_policy for states.amazonaws.com
+  # logging_configuration {
+  #   level                  = "ALL"
+  #   include_execution_data = true
+  #   log_destination        = "${aws_cloudwatch_log_group.sfn.arn}:*"
+  # }
+  # tracing_configuration { enabled = true }
+  tags       = { Project = "FrameOps", Env = var.env }
+  depends_on = [aws_cloudwatch_log_group.sfn, aws_iam_role_policy.sfn]
 }
 
 output "state_machine_arn" { value = aws_sfn_state_machine.processing.arn }
