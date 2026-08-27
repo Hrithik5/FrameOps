@@ -2,7 +2,7 @@
 
 > **Purpose:** Record *every* small decision that locked the final diagram as the authoritative architecture, with alternatives, trade-offs, and why we kept it.
 > **Source of Truth:** `FrameOps_Master_Project_Specification_v1.docx` (50 sections, Verification PASS) + your final ASCII diagram (S3→EventBridge→SQS→Lambda→Step Functions→ECS Fargate→S3/DynamoDB→S3 Parquet→Glue→Athena + cross-cutting Terraform|IAM|KMS|VPC|CloudWatch|CI/CD)
-> **Locked Mode:** Local-first MVP, `ap-south-1`, flat data lake (no medallion), <1M volume, simple Athena search.
+> **Locked Mode:** Local-first MVP, `ap-south-1`, flat data lake, <1M volume, simple Athena search.
 > **Build Reference:** `0de6809` (42 tests, ruff/mypy clean), `docs/superpowers/specs/2026-08-27-frameops-design.md:1`, `docs/superpowers/plans/2026-08-27-frameops-implementation.md:1`
 
 ---
@@ -119,21 +119,21 @@ We chose **workload justification over resume-driven sprawl** (Spec §50 rule 7)
 
 ---
 
-## 8. S3/Parquet/Glue/Athena Form the Data Platform (Flat, No Medallion)
+## 8. S3/Parquet/Glue/Athena Form the Data Platform (Flat)
 
-**Decision:** **Flat lake** `s3://frameops-data-dev/{asset_metadata,technical_metadata,processing_jobs,asset_lineage}/year=YYYY/month=MM/day=DD/part-*.parquet` Snappy (§19-20). Four datasets per Spec §20 Table 6, not Bronze/Silver/Gold. Athena workgroup `frameops-dev`, Glue DB `frameops_data_dev`.
+**Decision:** **Flat lake** `s3://frameops-data-dev/{asset_metadata,technical_metadata,processing_jobs,asset_lineage}/year=YYYY/month=MM/day=DD/part-*.parquet` Snappy (§19-20). Four datasets per Spec §20 Table 6. Athena workgroup `frameops-dev`, Glue DB `frameops_data_dev`.
 
-**Why flat for <1M:** Gold layer (pre-aggregated `daily counts, p95, derivatives/asset`) is medallion overhead: 3× S3 writes, 3× Glue crawlers, 3× Athena scans, 3× partitioning decisions (§44). With <1M, §29 questions are answered by scanning `asset_metadata` with `WHERE asset_type='video' AND year=2026` + Parquet column pruning in <1s (§31 cost trivial). DQ check before Parquet (`services/metadata/parquet_writer.py:11` rejects `file_size_bytes<=0, invalid enum`) already gives Silver quality without Bronze copy.
+**Why flat for <1M:** A layered multi-stage lake (separate raw, validated, and aggregated stages with 3× S3 writes, 3× Glue crawlers, 3× Athena scans, 3× partitioning decisions per §44) is overhead at this scale. With <1M, §29 questions are answered by scanning `asset_metadata` with `WHERE asset_type='video' AND year=2026` + Parquet column pruning in <1s (§31 cost trivial). DQ check before Parquet (`services/metadata/parquet_writer.py:11` rejects `file_size_bytes<=0, invalid enum`) already guarantees validated quality without duplicating raw.
 
-**Why not medallion now:** User confirmed `<1M obviously, doubt need for gold layers for meta deta, a simple athena search would be enough`. Raw immutability already provides Bronze (`s3://.../raw/` + `quarantine/`). Gold can be **views**, not copies: `CREATE VIEW gold_daily AS SELECT asset_type, count(*) FROM asset_metadata GROUP BY ...`.
+**Why not layered now:** User confirmed `<1M obviously, doubt need for dedicated aggregated layers for meta deta, a simple athena search would be enough`. Raw immutability already provides the raw stage (`s3://.../raw/` + `quarantine/`). Aggregates can be **Athena views**, not physical copies: `CREATE VIEW daily_counts AS SELECT asset_type, count(*) FROM asset_metadata GROUP BY asset_type, year`.
 
 **Alternatives rejected:**
-- Physical Bronze→Silver→Gold → justified only at >10M or streaming merges (§30 burst 20k/10m still fits SQS+flat).
+- Physical layered lake with separate validation and aggregation stages → justified only at >10M or streaming merges (§30 burst 20k/10m still fits SQS+flat).
 - RDS analytics → loses columnar scan savings, couples analytical to operational.
 
 **Implementation:** `services/metadata/builder.py:15` denormalizes canonical + technical into one searchable `asset_metadata` row (easy `SELECT * FROM asset_metadata WHERE mime_type='video/mp4'`); lineage stored separately but joinable via `asset_id` (`data/schemas/lineage.py:1`). `tests/integration/test_data_platform.py:38` rejects zero size; `tests/integration/test_e2e.py:1` proves Parquet→DuckDB (Athena local). Partition `year/month/day` validated; high-cardinality (`asset_type`) partitioning deferred per §20.
 
-**When to revisit:** If volume >5M or you need incremental MERGE or `p95` pre-aggregated dashboards → promote `processing_jobs` to Gold aggregates via Athena views first, physicalize only after benchmark (§44).
+**When to revisit:** If volume >5M or you need incremental MERGE or `p95` pre-aggregated dashboards → promote `processing_jobs` to aggregated views first, physicalize only after benchmark (§44).
 
 ---
 
@@ -204,7 +204,7 @@ We chose **workload justification over resume-driven sprawl** (Spec §50 rule 7)
 | API/control plane | Deferred §28 | Only if consumer |
 | Processors | Registry extensible | As formats expand |
 | AI enrichment | Future | After core stable |
-| Medallion | **Rejected** for <1M — flat + views | If >5M or streaming MERGE needed |
+| Layered lake | **Rejected** for <1M — flat + Athena views | If >5M or streaming MERGE needed |
 
 ---
 
