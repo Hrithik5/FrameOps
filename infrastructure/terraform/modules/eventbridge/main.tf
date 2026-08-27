@@ -43,7 +43,6 @@ resource "aws_cloudwatch_event_rule" "s3_object_created" {
 }
 
 resource "aws_cloudwatch_event_target" "to_sqs" {
-  count     = var.sqs_arn != "" ? 1 : 0
   rule      = aws_cloudwatch_event_rule.s3_object_created.name
   target_id = "SendToSQS"
   arn       = var.sqs_arn

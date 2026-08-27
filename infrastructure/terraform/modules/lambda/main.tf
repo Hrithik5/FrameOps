@@ -95,7 +95,6 @@ resource "aws_lambda_function" "validator" {
 }
 
 resource "aws_lambda_event_source_mapping" "sqs" {
-  count                              = var.sqs_arn != "" ? 1 : 0
   event_source_arn                   = var.sqs_arn
   function_name                      = aws_lambda_function.validator.arn
   batch_size                         = 10

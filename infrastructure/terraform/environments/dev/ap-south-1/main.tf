@@ -1,12 +1,12 @@
 terraform {
   required_version = ">= 1.5"
-  backend "s3" {
-    # Fill after creating backend bucket + table:
-    # bucket         = "frameops-tfstate-dev-ap-south-1"
-    # key            = "dev/ap-south-1/terraform.tfstate"
-    # region         = "ap-south-1"
-    # dynamodb_table = "frameops-tflock-dev"
-  }
+  # backend "s3" disabled for local plan — uncomment before real apply
+  # backend "s3" {
+  #   bucket         = "frameops-tfstate-dev-ap-south-1"
+  #   key            = "dev/ap-south-1/terraform.tfstate"
+  #   region         = "ap-south-1"
+  #   dynamodb_table = "frameops-tflock-dev"
+  # }
   required_providers {
     aws = { source = "hashicorp/aws", version = ">= 5.0" }
   }
