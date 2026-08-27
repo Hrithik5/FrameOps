@@ -28,7 +28,7 @@ variable "assets_bucket_arn" {
 
 resource "aws_cloudwatch_event_rule" "s3_object_created" {
   name        = "frameops-${var.env}-s3-object-created"
-  description = "Route S3 ObjectCreated to SQS (Spec §8 EventBridge)"
+  description = "Route S3 ObjectCreated to SQS (Spec EventBridge)"
   event_pattern = jsonencode({
     source        = ["aws.s3"]
     "detail-type" = ["Object Created"]

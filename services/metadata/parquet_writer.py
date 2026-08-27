@@ -1,4 +1,4 @@
-"""Parquet writer with Snappy + year/month/day partitioning + DQ (Spec §20, §24)."""
+"""Parquet writer with Snappy + year/month/day partitioning + DQ (Spec )."""
 
 import datetime
 import pathlib

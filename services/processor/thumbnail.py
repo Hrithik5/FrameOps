@@ -1,4 +1,4 @@
-"""Thumbnail / resize processor — Pillow based, retry-safe (Spec §15)."""
+"""Thumbnail / resize processor — Pillow based, retry-safe (Spec )."""
 
 import pathlib
 import time
@@ -29,7 +29,7 @@ def run_thumbnail(inp: WorkerInput) -> WorkerOutput:
             bg = Image.new("RGB", img.size, (255, 255, 255))
             bg.paste(img, mask=img.split()[-1] if img.mode == "RGBA" else None)
             img = bg  # type: ignore[assignment]
-        # Handle extensionless output (Spec §22 deterministic URI has no ext) — default JPEG
+        # Handle extensionless output (Spec deterministic URI has no ext) — default JPEG
         if not out_path.suffix:
             img.save(inp.output_uri, format="JPEG")
         else:

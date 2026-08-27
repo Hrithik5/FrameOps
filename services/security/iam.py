@@ -1,4 +1,4 @@
-"""IAM least-privilege helpers — Spec §26 Table 9."""
+"""IAM least-privilege helpers — Spec Table 9."""
 
 ROLE_SCOPES = {
     "lambda_validator": {

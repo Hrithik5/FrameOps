@@ -1,1 +1,1 @@
-"""Security — Spec §26-27."""
+"""Security — Spec ."""

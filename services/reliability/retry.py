@@ -1,4 +1,4 @@
-"""Bounded exponential backoff — Spec §23, §37."""
+"""Bounded exponential backoff — Spec ."""
 
 from typing import Literal
 

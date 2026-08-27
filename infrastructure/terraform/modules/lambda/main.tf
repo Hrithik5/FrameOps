@@ -45,7 +45,7 @@ variable "lambda_role_arn" {
   default = ""
 }
 
-# Real validator zip — packages services/validator + data/schemas + fallback logic (Spec §8)
+# Real validator zip — packages services/validator + data/schemas + fallback logic (Spec )
 # Build dir is at ../../../../build/lambda_validator (created via build/lambda_validator)
 data "archive_file" "validator_placeholder" {
   type        = "zip"
@@ -95,7 +95,7 @@ resource "aws_lambda_event_source_mapping" "sqs" {
   function_response_types            = ["ReportBatchItemFailures"]
 }
 
-# Finalizer Lambda (PUBLISHED gate §11)
+# Finalizer Lambda (PUBLISHED gate )
 data "archive_file" "finalizer_placeholder" {
   type        = "zip"
   output_path = "${path.module}/finalizer_placeholder.zip"

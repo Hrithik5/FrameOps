@@ -1,4 +1,4 @@
-"""Quarantine handling — Spec §23."""
+"""Quarantine handling — Spec ."""
 
 import pathlib
 

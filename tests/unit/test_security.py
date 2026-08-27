@@ -26,7 +26,7 @@ def test_redact_aws_key():
 
 
 def test_secrets_not_in_logs():
-    # Simulate log line check per §26 bullet 4
+    # Simulate log line check per bullet 4
     log = "processing asset a1 with checksum abc and token mytoken"
     redacted = redact_string(log)
     assert "mytoken" not in redacted or "***" in redacted

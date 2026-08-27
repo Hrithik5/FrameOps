@@ -1,4 +1,4 @@
-"""Worker input/output contracts — Spec §15."""
+"""Worker input/output contracts — Spec ."""
 
 from typing import Literal
 

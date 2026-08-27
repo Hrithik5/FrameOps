@@ -1,6 +1,6 @@
 # Terraform
 
-Dev and prod have separate state files — never share state (§32).
+Dev and prod have separate state files — never share state .
 
 Remote backend:
 - `s3://frameops-tfstate-dev-ap-south-1` + `frameops-tflock-dev`
@@ -10,5 +10,5 @@ Remote backend:
 cd environments/dev/ap-south-1
 terraform init
 terraform plan
-terraform apply  # dev only; prod requires manual approval per Spec §36
+terraform apply  # dev only; prod requires manual approval per Spec 
 ```

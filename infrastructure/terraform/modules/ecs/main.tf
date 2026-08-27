@@ -116,7 +116,7 @@ locals {
   task_role      = var.ecs_task_role_arn != "" ? var.ecs_task_role_arn : "arn:aws:iam::YOUR_AWS_ACCOUNT_ID:role/frameops-${var.env}-ecs-worker"
 }
 
-# Metadata task — 512/1024 (Spec §44) — uses ECR image if pushed, else busybox for test
+# Metadata task — 512/1024 (Spec ) — uses ECR image if pushed, else busybox for test
 resource "aws_ecs_task_definition" "metadata" {
   family                   = "frameops-${var.env}-metadata"
   requires_compatibilities = ["FARGATE"]
@@ -146,7 +146,7 @@ resource "aws_ecs_task_definition" "metadata" {
   tags = { Project = "FrameOps", Env = var.env }
 }
 
-# Transcode task — 1024/2048 (Spec §44)
+# Transcode task — 1024/2048 (Spec )
 resource "aws_ecs_task_definition" "transcode" {
   family                   = "frameops-${var.env}-transcode"
   requires_compatibilities = ["FARGATE"]

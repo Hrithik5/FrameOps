@@ -1,4 +1,4 @@
-# FrameOps prod — isolated state (Spec §32: no shared state)
+# FrameOps prod — isolated state (Spec : no shared state)
 terraform {
   required_version = ">= 1.5"
   # backend "s3" — uncomment when ready for prod

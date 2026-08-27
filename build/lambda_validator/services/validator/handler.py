@@ -1,4 +1,4 @@
-"""Lambda validator handler — thin wrapper over pure core (Spec §8)."""
+"""Lambda validator handler — thin wrapper over pure core (Spec )."""
 
 import json
 import os
@@ -133,7 +133,7 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
                 )
                 continue
 
-            # Idempotent DynamoDB Put — Spec §22 ConditionExpression
+            # Idempotent DynamoDB Put — Spec ConditionExpression
             try:
                 assert dynamodb is not None
                 dynamodb.put_item(
@@ -162,7 +162,7 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
                 # Other DynamoDB errors → retry via SQS (raise to trigger SQS redelivery)
                 raise
 
-            # Start Step Functions execution — Spec §14
+            # Start Step Functions execution — Spec 
             try:
                 assert sfn is not None
                 sfn.start_execution(
@@ -176,7 +176,7 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
                     {"asset_id": asset_id, "status": "proceed", "asset_type": asset_type}
                 )
             except Exception:
-                # If SFN start fails, let SQS redelivery handle it (Spec §23)
+                # If SFN start fails, let SQS redelivery handle it (Spec )
                 raise
 
         except Exception as e:

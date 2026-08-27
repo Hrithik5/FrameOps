@@ -61,4 +61,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Manual approval required
-        run: echo "Production apply requires manual approval per Spec §36"
+        run: echo "Production apply requires manual approval per Spec 36"

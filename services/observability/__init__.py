@@ -1,1 +1,1 @@
-"""Observability — Spec §25."""
+"""Observability — Spec ."""

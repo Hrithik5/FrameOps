@@ -1,4 +1,4 @@
-"""DLQ simulation — Spec §23 SQS redelivery."""
+"""DLQ simulation — Spec SQS redelivery."""
 
 from dataclasses import dataclass, field
 

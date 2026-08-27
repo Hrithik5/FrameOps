@@ -33,4 +33,4 @@ pytest tests/integration/test_e2e.py -v
 
 - Real ffmpeg only in Fargate Dockerfiles; local transcode is copy-stub.
 - Athena → DuckDB locally.
-- NAT vs VPC endpoints: dev uses endpoints to avoid NAT cost (Spec §44).
+- NAT vs VPC endpoints: dev uses endpoints to avoid NAT cost (Spec ).

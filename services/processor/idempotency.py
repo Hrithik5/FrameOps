@@ -1,4 +1,4 @@
-"""Idempotency helpers — Spec §22."""
+"""Idempotency helpers — Spec ."""
 
 import hashlib
 

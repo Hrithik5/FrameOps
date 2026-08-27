@@ -1,4 +1,4 @@
-"""Universal asset metadata — Spec §17."""
+"""Universal asset metadata — Spec ."""
 
 from typing import Literal
 

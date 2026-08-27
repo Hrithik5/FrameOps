@@ -21,7 +21,7 @@ resource "aws_dynamodb_table" "assets" {
   hash_key     = "PK"
   range_key    = "SK"
 
-  # PK=ASSET#<asset_id>, SK=ASSET#<asset_id> for asset, SK=JOB#<job_id> for jobs (§21)
+  # PK=ASSET#<asset_id>, SK=ASSET#<asset_id> for asset, SK=JOB#<job_id> for jobs 
   attribute {
     name = "PK"
     type = "S"

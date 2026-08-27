@@ -1,4 +1,4 @@
-"""ASSET_CREATED event contract — v1.0 per Spec §16.1."""
+"""ASSET_CREATED event contract — v1.0 per Spec .1."""
 
 from typing import Literal
 

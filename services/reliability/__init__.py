@@ -1,1 +1,1 @@
-"""Reliability package — Spec §23, §37."""
+"""Reliability package — Spec ."""

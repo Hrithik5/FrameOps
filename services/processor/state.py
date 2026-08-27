@@ -1,4 +1,4 @@
-"""DynamoDB state helpers — conditional writes for idempotency (Spec §22)."""
+"""DynamoDB state helpers — conditional writes for idempotency (Spec )."""
 
 from typing import Any
 

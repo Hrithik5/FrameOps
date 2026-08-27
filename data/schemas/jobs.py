@@ -1,4 +1,4 @@
-"""Job state machine — Spec §12 Table 4."""
+"""Job state machine — Spec Table 4."""
 
 from typing import Literal
 
@@ -21,7 +21,7 @@ class Job(BaseModel):
     worker_type: str | None = None
 
 
-# Valid transitions per Spec §12
+# Valid transitions per Spec 
 VALID_TRANSITIONS: dict[JobStatus, set[JobStatus]] = {
     "PENDING": {"RUNNING", "FAILED"},
     "RUNNING": {"SUCCEEDED", "FAILED", "RETRY"},

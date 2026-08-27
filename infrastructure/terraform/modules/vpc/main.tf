@@ -32,7 +32,7 @@ resource "aws_subnet" "private_b" {
   tags              = { Name = "frameops-${var.env}-private-b" }
 }
 
-# VPC endpoints to avoid NAT cost in dev (Spec §44)
+# VPC endpoints to avoid NAT cost in dev (Spec )
 resource "aws_vpc_endpoint" "s3" {
   vpc_id       = aws_vpc.frameops.id
   service_name = "com.amazonaws.${var.region}.s3"

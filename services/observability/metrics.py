@@ -1,4 +1,4 @@
-"""CloudWatch metrics helpers — Spec §25."""
+"""CloudWatch metrics helpers — Spec ."""
 
 import json
 import time
@@ -28,7 +28,7 @@ def emit(metric: Metric) -> dict[str, Any]:
     return payload
 
 
-# Predefined metrics per §25 Table 8
+# Predefined metrics per Table 8
 def sqs_depth(depth: int) -> Metric:
     return Metric(name="SQSQueueDepth", value=float(depth))
 

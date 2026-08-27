@@ -1,4 +1,4 @@
-"""Per-type technical metadata — Spec §17 Table 5."""
+"""Per-type technical metadata — Spec Table 5."""
 
 from typing import Literal
 

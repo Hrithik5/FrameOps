@@ -23,5 +23,5 @@ def test_alarms_cover_spec():
     assert "FrameOps-SQS-Backlog" in names
     assert "FrameOps-DLQ-Growth" in names
     assert "FrameOps-SFN-FailureSpike" in names
-    # Spec §25: do not page on every individual asset failure — verify no per-asset alarm
+    # Spec : do not page on every individual asset failure — verify no per-asset alarm
     assert not any(a["metric"] == "AssetFailed" for a in ALARMS)

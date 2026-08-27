@@ -1,4 +1,4 @@
-"""Finalizer gate — PUBLISHED only if all required ops SUCCEEDED (Spec §11, §24)."""
+"""Finalizer gate — PUBLISHED only if all required ops SUCCEEDED (Spec )."""
 
 from typing import Literal
 
@@ -19,7 +19,7 @@ def finalize_with_outputs(
     job_results: dict[str, str],
     output_exists: dict[str, bool],
 ) -> Literal["PUBLISHED", "FAILED"]:
-    """Also verifies outputs exist on S3 (Spec §37: never PUBLISHED without required outputs)."""
+    """Also verifies outputs exist on S3 (Spec : never PUBLISHED without required outputs)."""
     if finalize(asset_id, required_ops, job_results) == "FAILED":
         return "FAILED"
     for op in required_ops:

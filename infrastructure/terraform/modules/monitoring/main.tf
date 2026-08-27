@@ -29,7 +29,7 @@ resource "aws_cloudwatch_dashboard" "frameops" {
   dashboard_body = file("${path.module}/dashboard.json")
 }
 
-# Alarms per Spec §25
+# Alarms per Spec 
 resource "aws_cloudwatch_metric_alarm" "sqs_backlog" {
   alarm_name          = "FrameOps-${var.env}-SQS-Backlog"
   comparison_operator = "GreaterThanThreshold"
@@ -39,7 +39,7 @@ resource "aws_cloudwatch_metric_alarm" "sqs_backlog" {
   period              = 300
   statistic           = "Maximum"
   threshold           = 1000
-  alarm_description   = "Sustained queue backlog — Spec §25"
+  alarm_description   = "Sustained queue backlog — Spec "
 }
 
 resource "aws_cloudwatch_metric_alarm" "dlq_growth" {
@@ -51,7 +51,7 @@ resource "aws_cloudwatch_metric_alarm" "dlq_growth" {
   period              = 300
   statistic           = "Maximum"
   threshold           = 0
-  alarm_description   = "Unexpected DLQ growth — Spec §25"
+  alarm_description   = "Unexpected DLQ growth — Spec "
 }
 
 resource "aws_cloudwatch_metric_alarm" "sfn_failures" {

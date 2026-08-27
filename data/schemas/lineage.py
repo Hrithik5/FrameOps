@@ -1,4 +1,4 @@
-"""Asset lineage — Spec §18."""
+"""Asset lineage — Spec ."""
 
 from pydantic import BaseModel, Field
 

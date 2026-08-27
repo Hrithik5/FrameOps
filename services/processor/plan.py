@@ -1,4 +1,4 @@
-"""Processing plan registry — Spec §10, §13."""
+"""Processing plan registry — Spec ."""
 
 from typing import Literal
 
@@ -21,6 +21,6 @@ def get_plan(asset_type: str) -> list[str]:
 
 
 def register_operation(asset_type: AssetType, operation: str) -> None:
-    """Extensible registry — new operations without ingestion change (§13)."""
+    """Extensible registry — new operations without ingestion change ."""
     if operation not in PLAN_REGISTRY[asset_type]:
         PLAN_REGISTRY[asset_type].append(operation)

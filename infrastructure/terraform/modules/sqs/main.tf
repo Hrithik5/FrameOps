@@ -27,11 +27,11 @@ resource "aws_sqs_queue" "dlq" {
 
 resource "aws_sqs_queue" "main" {
   name                       = "frameops-${var.env}-queue"
-  visibility_timeout_seconds = 300 # Spec §4, prevents blocking
+  visibility_timeout_seconds = 300 # Spec prevents blocking
   message_retention_seconds  = 1209600
   redrive_policy = jsonencode({
     deadLetterTargetArn = aws_sqs_queue.dlq.arn
-    maxReceiveCount     = 5 # Spec §23 delivery/control
+    maxReceiveCount     = 5 # Spec delivery/control
   })
   tags = {
     Project = "FrameOps"

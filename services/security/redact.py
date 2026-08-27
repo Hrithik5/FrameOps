@@ -1,4 +1,4 @@
-"""Secret redaction — Spec §26 bullet 3."""
+"""Secret redaction — Spec bullet 3."""
 # mypy: disable-error-code="type-arg,assignment,arg-type,unused-ignore"
 
 import re

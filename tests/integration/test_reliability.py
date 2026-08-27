@@ -1,4 +1,4 @@
-"""Reliability injection — Spec §23, Task 9."""
+"""Reliability injection — Spec Task 9."""
 
 from PIL import Image
 

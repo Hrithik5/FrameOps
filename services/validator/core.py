@@ -1,4 +1,4 @@
-"""Pure validation logic — no AWS SDK, testable locally (Spec §34)."""
+"""Pure validation logic — no AWS SDK, testable locally (Spec )."""
 
 from typing import Literal
 

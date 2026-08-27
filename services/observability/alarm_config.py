@@ -1,4 +1,4 @@
-"""Alarm definitions — Spec §25 bullet list."""
+"""Alarm definitions — Spec bullet list."""
 
 ALARMS = [
     {
