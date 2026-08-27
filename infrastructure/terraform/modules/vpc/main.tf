@@ -2,8 +2,14 @@ terraform {
   required_version = ">= 1.5"
   required_providers { aws = { source = "hashicorp/aws", version = ">= 5.0" } }
 }
-variable "env" { type = string, default = "dev" }
-variable "region" { type = string, default = "ap-south-1" }
+variable "env" {
+  type    = string
+  default = "dev"
+}
+variable "region" {
+  type    = string
+  default = "ap-south-1"
+}
 
 resource "aws_vpc" "frameops" {
   cidr_block           = "10.0.0.0/16"

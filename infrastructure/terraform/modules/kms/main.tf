@@ -2,7 +2,10 @@ terraform {
   required_version = ">= 1.5"
   required_providers { aws = { source = "hashicorp/aws", version = ">= 5.0" } }
 }
-variable "env" { type = string, default = "dev" }
+variable "env" {
+  type    = string
+  default = "dev"
+}
 
 resource "aws_kms_key" "frameops" {
   description             = "FrameOps ${var.env} key"
