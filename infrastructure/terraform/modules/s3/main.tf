@@ -12,12 +12,12 @@ variable "env" {
 
 variable "region" {
   type    = string
-  default = "ap-south-1"
+  default = "YOUR_AWS_REGION"
 }
 
 variable "account_id" {
   type    = string
-  default = "559050238050"
+  default = "YOUR_AWS_ACCOUNT_ID"
 }
 
 locals {

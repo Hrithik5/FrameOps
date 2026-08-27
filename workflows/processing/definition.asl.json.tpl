@@ -374,7 +374,7 @@
     },
     "Finalize": {
       "Type": "Task",
-      "Resource": "arn:aws:lambda:${region}:559050238050:function:frameops-${env}-finalizer",
+      "Resource": "arn:aws:lambda:${region}:YOUR_AWS_ACCOUNT_ID:function:frameops-${env}-finalizer",
       "Retry": [
         {
           "ErrorEquals": [

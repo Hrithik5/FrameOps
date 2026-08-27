@@ -628,7 +628,7 @@ Expected: FAIL
     ], "Next": "Finalize", "Retry": [{"ErrorEquals": ["States.ALL"], "MaxAttempts": 3, "IntervalSeconds": 2, "BackoffRate": 2.0}], "Catch": [{"ErrorEquals": ["States.ALL"], "Next": "TerminalFailure"}]},
     "ParallelVideo": {"Type": "Parallel", "Branches": [], "Next": "Finalize"},
     "ParallelOther": {"Type": "Parallel", "Branches": [], "Next": "Finalize"},
-    "Finalize": {"Type": "Task", "Resource": "arn:aws:lambda:ap-south-1:123456789012:function:finalizer", "Next": "CheckResult"},
+    "Finalize": {"Type": "Task", "Resource": "arn:aws:lambda:ap-south-1:YOUR_AWS_ACCOUNT_ID:function:finalizer", "Next": "CheckResult"},
     "CheckResult": {"Type": "Choice", "Choices": [{"Variable": "$.status", "StringEquals": "PUBLISHED", "Next": "Succeed"}], "Default": "TerminalFailure"},
     "TerminalFailure": {"Type": "Fail", "Cause": "processing failed"},
     "Succeed": {"Type": "Succeed"}

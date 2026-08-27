@@ -15,7 +15,7 @@ variable "env" {
 
 variable "region" {
   type    = string
-  default = "ap-south-1"
+  default = "YOUR_AWS_REGION"
 }
 
 resource "aws_cloudwatch_log_group" "frameops" {

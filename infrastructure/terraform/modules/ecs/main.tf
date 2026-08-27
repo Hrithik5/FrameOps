@@ -12,7 +12,7 @@ variable "env" {
 
 variable "region" {
   type    = string
-  default = "ap-south-1"
+  default = "YOUR_AWS_REGION"
 }
 
 variable "vpc_id" {
@@ -113,7 +113,7 @@ resource "aws_cloudwatch_log_group" "ecs" {
 
 locals {
   execution_role = var.ecs_execution_role_arn != "" ? var.ecs_execution_role_arn : aws_iam_role.execution[0].arn
-  task_role      = var.ecs_task_role_arn != "" ? var.ecs_task_role_arn : "arn:aws:iam::559050238050:role/frameops-${var.env}-ecs-worker"
+  task_role      = var.ecs_task_role_arn != "" ? var.ecs_task_role_arn : "arn:aws:iam::YOUR_AWS_ACCOUNT_ID:role/frameops-${var.env}-ecs-worker"
 }
 
 # Metadata task — 512/1024 (Spec §44) — uses ECR image if pushed, else busybox for test

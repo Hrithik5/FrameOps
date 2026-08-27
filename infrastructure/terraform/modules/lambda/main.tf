@@ -12,7 +12,7 @@ variable "env" {
 
 variable "region" {
   type    = string
-  default = "ap-south-1"
+  default = "YOUR_AWS_REGION"
 }
 
 variable "sqs_arn" {
@@ -69,7 +69,7 @@ resource "aws_lambda_function" "validator" {
   runtime          = "python3.11"
   filename         = data.archive_file.validator_placeholder.output_path
   source_code_hash = data.archive_file.validator_placeholder.output_base64sha256
-  role             = var.lambda_role_arn != "" ? var.lambda_role_arn : "arn:aws:iam::559050238050:role/frameops-${var.env}-lambda-validator"
+  role             = var.lambda_role_arn != "" ? var.lambda_role_arn : "arn:aws:iam::YOUR_AWS_ACCOUNT_ID:role/frameops-${var.env}-lambda-validator"
   timeout          = 30
   memory_size      = 256
   environment {
@@ -128,7 +128,7 @@ resource "aws_lambda_function" "finalizer" {
   runtime          = "python3.11"
   filename         = data.archive_file.finalizer_placeholder.output_path
   source_code_hash = data.archive_file.finalizer_placeholder.output_base64sha256
-  role             = var.lambda_role_arn != "" ? var.lambda_role_arn : "arn:aws:iam::559050238050:role/frameops-${var.env}-lambda-validator"
+  role             = var.lambda_role_arn != "" ? var.lambda_role_arn : "arn:aws:iam::YOUR_AWS_ACCOUNT_ID:role/frameops-${var.env}-lambda-validator"
   timeout          = 30
   memory_size      = 256
   tags = {

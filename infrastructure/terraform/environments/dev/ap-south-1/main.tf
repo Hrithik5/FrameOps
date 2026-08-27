@@ -3,7 +3,7 @@ terraform {
   backend "s3" {
     bucket       = "frameops-tfstate-dev-ap-south-1"
     key          = "dev/ap-south-1/terraform.tfstate"
-    region       = "ap-south-1"
+    region       = "YOUR_AWS_REGION"
     use_lockfile = true
   }
   required_providers {
@@ -12,14 +12,14 @@ terraform {
 }
 
 provider "aws" {
-  region = "ap-south-1"
+  region = "YOUR_AWS_REGION"
   default_tags { tags = { Project = "FrameOps", Env = "dev" } }
 }
 
 locals {
   env        = "dev"
-  region     = "ap-south-1"
-  account_id = "559050238050"
+  region     = "YOUR_AWS_REGION"
+  account_id = "YOUR_AWS_ACCOUNT_ID"
 }
 
 module "vpc" {

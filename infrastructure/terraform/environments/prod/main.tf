@@ -5,7 +5,7 @@ terraform {
   # backend "s3" {
   #   bucket       = "frameops-tfstate-prod-ap-south-1"
   #   key          = "prod/ap-south-1/terraform.tfstate"
-  #   region       = "ap-south-1"
+  #   region       = "YOUR_AWS_REGION"
   #   use_lockfile = true
   # }
   required_providers {
@@ -14,7 +14,7 @@ terraform {
 }
 
 provider "aws" {
-  region = "ap-south-1"
+  region = "YOUR_AWS_REGION"
   default_tags { tags = { Project = "FrameOps", Env = "prod" } }
 }
 
