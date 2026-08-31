@@ -42,7 +42,7 @@ aws athena start-query-execution --query-string "SELECT * FROM frameops_dev.asse
 | `pytest tests/integration/test_reliability.py -v` | Failure injection: retry, DLQ, quarantine |
 | `python -c "from services.processor.plan import get_plan; print(get_plan('video'))"` | Inspect plan registry per asset type |
 
-## Architecture
+## Architecture In Detail
 
 ```
 S3 Raw Assets (video | image | audio | pdf)
